@@ -1,0 +1,63 @@
+---
+stages:
+  - lint
+  - build
+  - test
+  - container
+
+image: "${HARBOR_PROD}/cache/library/golang:1.15"
+
+golangci_lint:
+  stage: lint
+  tags:
+    - shared
+  before_script:
+    - export GOLANGCI_VERSION="1.33.0"
+    - curl -sLO "https://github.com/golangci/golangci-lint/releases/download/v${GOLANGCI_VERSION}/golangci-lint-${GOLANGCI_VERSION}-linux-amd64.tar.gz"
+    - tar xfz "golangci-lint-${GOLANGCI_VERSION}-linux-amd64.tar.gz"
+    - mv "golangci-lint-${GOLANGCI_VERSION}-linux-amd64/golangci-lint" /usr/local/bin
+    - rm -rf "golangci-lint-${GOLANGCI_VERSION}-linux-amd64" "golangci-lint-${GOLANGCI_VERSION}-linux-amd64.tar.gz"
+    - unset GOLANGCI_VERSION
+  script:
+    golangci-lint run --timeout 5m src/...
+
+go_lint:
+  stage: lint
+  tags:
+    - shared
+  before_script:
+    - go get golang.org/x/lint/golint
+  script:
+    - $GOPATH/bin/golint ./...
+
+yaml_lint:
+  image: "${HARBOR_PROD}/cache/library/debian:stable"
+  stage: lint
+  tags:
+    - shared
+  variables:
+    DEBIAN_FRONTEND: "noninteractive"
+  before_script:
+    - apt update && apt install -y yamllint
+  script:
+    - find ./ -name '*.yaml' -exec yamllint {} +
+
+build:
+  stage: build
+  tags:
+    - shared
+  script:
+    go build -o app src/main.go
+
+unittest:
+  stage: test
+  tags:
+    - shared
+  script:
+    - go get -u github.com/jstemmer/go-junit-report
+    - go test -v ./... 2>&1 | go-junit-report -set-exit-code > report.xml
+  artifacts:
+    when: always
+    reports:
+      junit: report.xml
+

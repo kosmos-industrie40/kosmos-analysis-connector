@@ -1,0 +1,24 @@
+---
+analysiscloud:
+  connector:
+    port: 8080
+    url: http://localhost
+  usermgmt:
+    password: password
+    path: auth
+    port: 8080
+    schema: http
+    url: localhost
+    user: test
+edge:
+  database:
+    database: edge
+    password: password
+    port: 5432
+    url: localhost
+    user: kosmos
+  mqtt:
+    port: 1883
+    url: localhost
+    password: password
+    user: kosmos

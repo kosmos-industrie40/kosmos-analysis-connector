@@ -1,0 +1,8 @@
+cov
+coverage.html
+app
+*.db
+report.xml
+# GoLang
+.idea
+*.iml
